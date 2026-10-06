@@ -1,0 +1,16 @@
+{
+  "name": "optimize-three",
+  "owner": { "name": "Max Liebscher", "url": "https://github.com/maxliebscher" },
+  "metadata": {
+    "description": "Browser 3D performance skill for Claude Code and other agents."
+  },
+  "plugins": [
+    {
+      "name": "optimize-three",
+      "source": "./",
+      "description": "Make browser 3D (three.js / WebGL2 / WebGPU) run smoothly on real hardware incl. integrated GPUs.",
+      "version": "0.1.0",
+      "category": "development"
+    }
+  ]
+}

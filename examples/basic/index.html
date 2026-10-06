@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>optimize-three · basic example</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0e1114; color: #e8edf2; font: 16px/1.4 system-ui, sans-serif; overflow: hidden; }
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #loader { position: fixed; inset: 0; display: grid; place-items: center; background: #0e1114; font-size: 20px; transition: opacity .4s; }
+  #help { position: fixed; right: 12px; bottom: 12px; font-size: 14px; opacity: .7; text-align: right; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="loader">Preparing shaders… <span id="pct">0%</span></div>
+<div id="help">?perf · ?q=low|mid|high · ?fps=30 · ?mode=demand · ?bench · ?dpr=1</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import {
+  detectGpu, createRenderer, createPerfKit, defaultLadder, startIndexForTier,
+  applyPixelRatio, setShadowMapSize, observeResize, warmup, wakeOnInput,
+} from '../../skills/optimize-three/kit/index.js';
+
+const profile = detectGpu();
+const mode = new URLSearchParams(location.search).get('mode') === 'demand' ? 'demand' : 'continuous';
+const { renderer, backend } = await createRenderer({ backend: profile.overrides.backend || 'webgl', antialias: profile.overrides.aa ?? true, trackTimestamp: profile.overrides.perf || profile.overrides.bench });
+document.getElementById('stage').appendChild(renderer.domElement);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoftShadowMap is removed in r186 (falls back to PCF)
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1b2229);
+scene.fog = new THREE.Fog(0x1b2229, 60, 140);
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 400);
+camera.position.set(38, 26, 38);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2018, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(30, 50, 20);
+sun.castShadow = true;
+Object.assign(sun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50, near: 1, far: 140 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x39434d, roughness: 0.9 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+ground.matrixAutoUpdate = false; ground.updateMatrix();
+scene.add(ground);
+
+// 4000 boxes, ONE draw call (instancing) — plus per-instance colour
+const N = +new URLSearchParams(location.search).get('n') || 4000, geo = new THREE.BoxGeometry(1, 1, 1);
+const boxes = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1 }), N);
+boxes.castShadow = boxes.receiveShadow = true;
+const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
+const base = [];
+for (let i = 0; i < N; i++) {
+  const r = Math.sqrt(Math.random()) * 45, a = Math.random() * Math.PI * 2, h = 0.5 + Math.random() * 4;
+  base.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, h, ph: Math.random() * 6.28 });
+  m.compose(p.set(base[i].x, h / 2, base[i].z), q, s.set(0.8, h, 0.8));
+  boxes.setMatrixAt(i, m);
+  boxes.setColorAt(i, c.setHSL(0.55 + Math.random() * 0.1, 0.5, 0.45 + Math.random() * 0.2));
+}
+boxes.computeBoundingSphere(); // spread-out instances: otherwise culled by a tiny sphere
+scene.add(boxes);
+
+// a few animated hero objects (these keep the shadow cache busy only while they move)
+const heroes = new THREE.Group();
+for (let i = 0; i < 6; i++) {
+  const k = new THREE.Mesh(new THREE.TorusKnotGeometry(1.6, 0.5, 160, 24), new THREE.MeshStandardMaterial({ color: 0xffb347, roughness: 0.3, metalness: 0.4 }));
+  k.position.set(Math.cos(i) * 12, 5, Math.sin(i) * 12); k.castShadow = true;
+  heroes.add(k);
+}
+scene.add(heroes);
+let animate = mode === 'continuous';
+
+const levels = defaultLadder({ maxDpr: 2 });
+const kit = createPerfKit({
+  renderer, scene, camera, profile, levels, mode,
+  start: startIndexForTier(levels, profile.tier),
+  apply(l) {
+    applyPixelRatio(renderer, l.dpr);
+    setShadowMapSize(sun, l.shadow, renderer);
+    // keep LOOK identical across levels — only cost changes
+  },
+  render({ dt, now }) {
+    const moving = controls.update(dt);
+    if (animate) for (const [i, k] of heroes.children.entries()) { k.rotation.y = now * 0.0006 + i; k.position.y = 5 + Math.sin(now * 0.001 + i) * 1.5; }
+    renderer.render(scene, camera);
+    return moving || animate; // demand mode: keep going only while something moves
+  },
+});
+observeResize(renderer, camera, () => kit.invalidate());
+camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+renderer.setSize(innerWidth, innerHeight, false);
+if (mode === 'demand') { wakeOnInput(kit.loop, renderer.domElement); controls.addEventListener('change', () => kit.invalidate()); }
+
+const pct = document.getElementById('pct');
+const w = await warmup({ renderer, scene, camera, onProgress: (v) => (pct.textContent = Math.round(v * 100) + '%') });
+console.log('[example] backend', backend, 'warmup', w, 'profile', profile);
+kit.start();
+requestAnimationFrame(() => { document.getElementById('loader').style.opacity = 0; setTimeout(() => document.getElementById('loader').remove(), 400); kit.ready(); });
+addEventListener('keydown', (e) => { if (e.key === 'a') { animate = !animate; kit.invalidate(); } });
+</script>
+</body>
+</html>
