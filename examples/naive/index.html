@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>optimize-three · naive baseline</title>
+<!-- The SAME scene as ../basic, written the way most posted demos are: no kit, no caps, no caching.
+     Used for the before/after numbers in the README. Don't copy this. -->
+<style>html,body{margin:0;height:100%;background:#0e1114;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);          // uncapped DPR
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;                         // shadows redrawn every frame
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1b2229);
+scene.fog = new THREE.Fog(0x1b2229, 60, 140);
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 400);
+camera.position.set(38, 26, 38);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2018, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(30, 50, 20); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50, near: 1, far: 140 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x39434d, roughness: 0.9 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+// one Mesh (and one material) per box: one draw call each, twice (shadow pass)
+const N = +new URLSearchParams(location.search).get('n') || 4000;
+for (let i = 0; i < N; i++) {
+  const r = Math.sqrt(Math.random()) * 45, a = Math.random() * Math.PI * 2, h = 0.5 + Math.random() * 4;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, h, 0.8),
+    new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.55 + Math.random() * 0.1, 0.5, 0.45 + Math.random() * 0.2), roughness: 0.6, metalness: 0.1 }));
+  m.position.set(Math.cos(a) * r, h / 2, Math.sin(a) * r);
+  m.castShadow = m.receiveShadow = true;
+  scene.add(m);
+}
+const heroes = [];
+for (let i = 0; i < 6; i++) {
+  const k = new THREE.Mesh(new THREE.TorusKnotGeometry(1.6, 0.5, 160, 24), new THREE.MeshStandardMaterial({ color: 0xffb347, roughness: 0.3, metalness: 0.4 }));
+  k.position.set(Math.cos(i) * 12, 5, Math.sin(i) * 12); k.castShadow = true;
+  scene.add(k); heroes.push(k);
+}
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+function animate(now) {                                    // uncapped, per-frame animation
+  requestAnimationFrame(animate);
+  heroes.forEach((k, i) => { k.rotation.y = now * 0.0006 + i; k.position.y = 5 + Math.sin(now * 0.001 + i) * 1.5; });
+  controls.update();
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

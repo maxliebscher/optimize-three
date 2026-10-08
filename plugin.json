@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "optimize-three",
+  "version": "0.1.0",
+  "description": "Make browser 3D (three.js / WebGL2 / WebGPU) run smoothly on real hardware incl. integrated GPUs: GPU detection, quality ladder + governor, even-paced frame cap, render-on-demand, shadow cache, warm-up, perf HUD, audit and real-GPU measurement scripts.",
+  "author": { "name": "Max Liebscher", "url": "https://github.com/maxliebscher" },
+  "homepage": "https://github.com/maxliebscher/optimize-three",
+  "repository": "https://github.com/maxliebscher/optimize-three",
+  "license": "MIT",
+  "keywords": ["three.js", "webgl", "webgpu", "performance", "igpu", "fps", "adaptive-quality"]
+}

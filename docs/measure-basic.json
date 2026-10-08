@@ -1,0 +1,176 @@
+{
+  "url": "http://localhost:5180/examples/basic/?perf",
+  "size": "1920x1080@1.5",
+  "seconds": 15,
+  "warm": 8,
+  "results": [
+    {
+      "gpu": "dgpu",
+      "gpuString": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Laptop GPU (0x0000249C) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "valid": true,
+      "loadMs": 937,
+      "rafFps": 355.84130050967724,
+      "rafP50": 2.7999999999992724,
+      "rafP95": 2.900000000001455,
+      "rafMax": 5.600000000002183,
+      "longTasks": 0,
+      "longTaskMs": 0,
+      "heapMB": 11,
+      "perf": {
+        "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Laptop GPU (0x0000249C) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "gpuShort": "NVIDIA GeForce RTX 3080 Laptop GPU",
+        "gpuClass": "discrete",
+        "backend": "webgl",
+        "displayHz": 250,
+        "fpsCap": 60,
+        "loopState": "running",
+        "fps": 60.9,
+        "intervalMs": {
+          "p50": 16.600000000002183,
+          "p95": 16.700000000000728,
+          "max": 19.5
+        },
+        "missRate": 0,
+        "cpuMs": {
+          "p50": 0.5,
+          "p95": 0.7999999523162842
+        },
+        "gpuMs": {
+          "p50": 2.676736,
+          "p95": 5.646336
+        },
+        "drawCalls": 15,
+        "drawCallsP95": 15,
+        "triangles": 188162,
+        "programs": 6,
+        "geometries": 8,
+        "textures": 3,
+        "buffer": "2880×1620",
+        "dpr": 1.5,
+        "shadowRendersPerS": 59.8,
+        "quality": {
+          "index": 0,
+          "count": 6,
+          "level": {
+            "name": "high",
+            "dpr": 1.5,
+            "shadow": 4096,
+            "msaa": 4,
+            "post": "high",
+            "detail": 1,
+            "cost": 2.48
+          },
+          "locked": false,
+          "ready": true,
+          "budgetMs": 16.67,
+          "lastGpuMs": 2.97,
+          "log": [
+            {
+              "t": 0,
+              "from": 0,
+              "to": 0,
+              "why": "init"
+            }
+          ]
+        },
+        "frames": 1394,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "time": "2026-10-08T09:48:44.341Z",
+        "profile": {
+          "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Laptop GPU (0x0000249C) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "gpuClass": "discrete",
+          "tier": "high",
+          "why": "NVIDIA"
+        }
+      },
+      "errors": []
+    },
+    {
+      "gpu": "igpu",
+      "gpuString": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A60) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "valid": true,
+      "loadMs": 1998,
+      "rafFps": 325.10949197058886,
+      "rafP50": 2.7999999999992724,
+      "rafP95": 5.400000000001455,
+      "rafMax": 5.600000000002183,
+      "longTasks": 0,
+      "longTaskMs": 0,
+      "heapMB": 11,
+      "perf": {
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A60) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "gpuShort": "Intel UHD Graphics",
+        "gpuClass": "integrated",
+        "backend": "webgl",
+        "displayHz": 250,
+        "fpsCap": 60,
+        "loopState": "running",
+        "fps": 61,
+        "intervalMs": {
+          "p50": 16.600000000002183,
+          "p95": 16.799999999999272,
+          "max": 19.400000000001455
+        },
+        "missRate": 0,
+        "cpuMs": {
+          "p50": 0.39999985694885254,
+          "p95": 0.8000001907348633
+        },
+        "gpuMs": {
+          "p50": 8.736822,
+          "p95": 10.332812
+        },
+        "drawCalls": 15,
+        "drawCallsP95": 15,
+        "triangles": 188162,
+        "programs": 6,
+        "geometries": 8,
+        "textures": 3,
+        "buffer": "1920×1080",
+        "dpr": 1,
+        "shadowRendersPerS": 61.3,
+        "quality": {
+          "index": 1,
+          "count": 6,
+          "level": {
+            "name": "balanced",
+            "dpr": 1,
+            "shadow": 2048,
+            "msaa": 4,
+            "post": "medium",
+            "detail": 0.8,
+            "cost": 0.97
+          },
+          "locked": false,
+          "ready": true,
+          "budgetMs": 16.67,
+          "lastGpuMs": 8.34,
+          "log": [
+            {
+              "t": 0,
+              "from": 2,
+              "to": 2,
+              "why": "init"
+            },
+            {
+              "t": 13.67,
+              "from": 2,
+              "to": 1,
+              "why": "headroom gpu 8.34→10.12ms"
+            }
+          ]
+        },
+        "frames": 1394,
+        "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "time": "2026-10-08T09:49:09.877Z",
+        "profile": {
+          "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A60) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "gpuClass": "integrated",
+          "tier": "low",
+          "why": "Intel integrated"
+        }
+      },
+      "errors": []
+    }
+  ]
+}

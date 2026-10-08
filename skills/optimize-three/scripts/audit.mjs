@@ -107,7 +107,8 @@ if (has(/logarithmicDepthBuffer\s*:\s*true/)) add('low', 'logdepth', 'logarithmi
 if (has(/castShadow\s*=\s*true/)) {
   if (!has(/shadowMap\.autoUpdate\s*=\s*false|autoUpdate\s*=\s*false/)) add('med', 'shadow-every-frame', 'Shadow maps re-render every frame. For static or rarely changing casters: renderer.shadowMap.autoUpdate = false + needsUpdate on change (kit/shadow-cache.js).');
   if (has(/PCFSoftShadowMap/) && (rev == null || rev >= 183)) add('low', 'pcfsoft', 'PCFSoftShadowMap is deprecated (r183) / removed (r186) and falls back to PCFShadowMap. Use PCFShadowMap + shadow.radius, or VSM.', where(/PCFSoftShadowMap/));
-  if (has(/mapSize\.(set|width|height)/) && !has(/shadow\.map\??\.dispose|map\.dispose\(\)[^\n]*\n?[^\n]*map\s*=\s*null|shadow\.map\s*=\s*null/)) add('low', 'shadow-resize', 'Changing shadow.mapSize at runtime needs shadow.map.dispose(); shadow.map = null; to take effect.', where(/mapSize\.(set|width|height)/));
+  // only sizes coming from a variable (tier/quality) count as runtime changes; literals are init
+  if (has(/mapSize\.set\(\s*[A-Za-z_$]|mapSize\.(width|height)\s*=\s*[A-Za-z_$]/) && !has(/shadow\.map\??\.dispose|map\.dispose\(\)[^\n]*\n?[^\n]*map\s*=\s*null|shadow\.map\s*=\s*null/)) add('low', 'shadow-resize', 'Changing shadow.mapSize at runtime needs shadow.map.dispose(); shadow.map = null; to take effect.', where(/mapSize\.(set|width|height)/));
 }
 if (has(/\.castShadow\s*=\s*!|castShadow\s*=\s*(on|enabled|q\.|quality|level)/) || has(/light\w*\.visible\s*=/i)) add('med', 'light-toggle', 'Lights/castShadow toggled at runtime: light count is baked into every program → recompile hitch. Keep lights constant, set intensity 0 instead.', where(/\.castShadow\s*=\s*!|light\w*\.visible\s*=/i));
 
@@ -131,6 +132,8 @@ if (has(/checkShaderErrors\s*=\s*true/) || (usesThree && !has(/checkShaderErrors
 const meshNews = (all.match(/new\s+(THREE\.)?Mesh\(/g) || []).length;
 const inst = has(/InstancedMesh|BatchedMesh|mergeGeometries|mergeBufferGeometries/);
 if (meshNews > 25 && !inst) add('med', 'no-instancing', `${meshNews} "new Mesh(" sites and no InstancedMesh/BatchedMesh/mergeGeometries: repeated objects should be instanced, static ones merged (target ≤ 150–300 draws).`);
+const loopMesh = /(for\s*\([^)]*\)|\.forEach\(|while\s*\([^)]*\))\s*\{?[^}]{0,600}?new\s+(THREE\.)?Mesh\(/;
+if (meshNews <= 25 && has(loopMesh)) add(inst ? 'low' : 'med', 'mesh-in-loop', 'Meshes created in a loop: one draw call per object (twice with shadows). Use InstancedMesh for copies, BatchedMesh/mergeGeometries for varied static parts; share geometry and material.', where(/new\s+(THREE\.)?Mesh\(/));
 if (has(/InstancedMesh/) && !has(/computeBoundingSphere|frustumCulled\s*=\s*false/)) add('low', 'instanced-bounds', 'InstancedMesh with spread-out instances needs computeBoundingSphere() (or frustumCulled=false), or it pops out of view.');
 if (!has(/\.dispose\(\)/)) add('med', 'no-dispose', 'No dispose() calls: geometry/material/texture/render-target memory is never freed when content changes.');
 if (!has(/webglcontextlost|onDeviceLost|device\.lost/)) add('med', 'no-context-loss', 'No context-loss handling (webglcontextlost + preventDefault / WebGPU device.lost). Sleep, driver resets and GPU switches will leave a dead canvas.');

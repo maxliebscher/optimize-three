@@ -1,0 +1,38 @@
+{
+  "url": "http://localhost:5180/examples/naive/?perf",
+  "size": "1920x1080@1.5",
+  "seconds": 15,
+  "warm": 8,
+  "results": [
+    {
+      "gpu": "dgpu",
+      "gpuString": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Laptop GPU (0x0000249C) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "valid": true,
+      "loadMs": 1308,
+      "rafFps": 34.419397360957625,
+      "rafP50": 27.799999999999272,
+      "rafP95": 36.100000000000364,
+      "rafMax": 58.29999999999927,
+      "longTasks": 1,
+      "longTaskMs": 57,
+      "heapMB": 78,
+      "perf": null,
+      "errors": []
+    },
+    {
+      "gpu": "igpu",
+      "gpuString": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A60) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "valid": true,
+      "loadMs": 1237,
+      "rafFps": 18.347770014691513,
+      "rafP50": 52.899999999999636,
+      "rafP95": 66.70000000000073,
+      "rafMax": 94.40000000000146,
+      "longTasks": 209,
+      "longTaskMs": 11709,
+      "heapMB": 89,
+      "perf": null,
+      "errors": []
+    }
+  ]
+}
