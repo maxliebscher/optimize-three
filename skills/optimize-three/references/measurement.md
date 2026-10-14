@@ -19,6 +19,37 @@ wrong GPU, in a throttled tab, or with a counter that cannot see headroom.
 - **Fresh profile ≠ real user**: a fresh browser context can read ~half the fps of a warm one on
   iGPUs (shader cache empty). Report which one you measured.
 
+## Script FPS sources and measurement windows
+
+`measure.mjs` always labels observer rAF cadence as `raf Hz` / `rafFps`; it is not render FPS.
+At reset (after warmup), it snapshots `window.__perf.report().frames`; at collection it takes a
+second snapshot. Top-level `renderFrames` is the counter delta, and `renderFps` divides that delta
+by `measurementMs / 1000`. Zero new frames means 0 FPS. Idle gaps are included in throughput.
+
+Without the kit, call `window.__measure?.recordRenderFrame()` once after the entire application
+frame (all passes; await async rendering first). Call it at least once during warmup so idle can
+be distinguished from missing instrumentation. The source is `render-hook`; kit counters take
+precedence (`perf-kit-counter`). Hook intervals are measured within the window; fewer than two
+frames gives null percentiles. Kit counters do not expose window-specific intervals, so
+`renderIntervalMs` is null for that source.
+
+If neither source is verifiable, `renderFps` and `renderFrames` are null, `renderSource` is
+`unmeasured`, and the table prints `–`. A legacy report with only `fps` is not a window counter.
+Counter replacement/decrease invalidates that source. Counters must be cumulative and monotonic
+for the entire run; undetected resets that recover above the baseline cannot be distinguished.
+Reports that throw are recorded in `perfError` and page errors without losing the rAF results.
+
+All existing JSON fields remain, including the unmodified nested `perf` report and GPU data.
+The nested report's FPS, intervals, CPU/GPU percentiles and miss rate are rolling application
+samples (up to 240 frames), not necessarily restricted to the script's measurement window.
+They may remain stale during idle; do not use them as throughput for the window.
+
+Automatic drawcall interception is not a reliable frame counter: one frame may contain many
+passes, multiple renderers or only an offscreen render. Workers and iframes require aggregation
+into the main page's counter/hook. Explicit counters count completed application frames, not
+GPU completion, display presentation, or unique visual changes. The observer's continuous rAF
+also changes idle scheduling and adds overhead; this is not an energy/idle-power benchmark.
+
 ## What to read
 | Signal | Meaning |
 |---|---|

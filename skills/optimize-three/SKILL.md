@@ -57,7 +57,9 @@ read the render loop and renderer setup yourself.
 npm i -D playwright-core        # once, in the project
 node <skill>/scripts/measure.mjs http://localhost:5173/ --gpu=both --seconds=10
 ```
-Reports GPU string, rendered fps, frame p50/p95/max, CPU/GPU ms, draws, triangles, DPR, level.
+Reports GPU string, measurement-window render fps (or unmeasured), separately labeled observer rAF Hz,
+rAF/rolling-kit interval p50/p95/max, CPU/GPU ms, draws, triangles, DPR, level. Never substitute rAF Hz
+or rolling `perf.fps` for measurement-window render throughput.
 If the machine has only one GPU, say so and don't claim iGPU results. See `references/measurement.md`.
 
 ### 3. Install the baseline kit (always — this is the "eh sinnvoll" part)
