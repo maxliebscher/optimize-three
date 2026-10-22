@@ -95,6 +95,47 @@ npm i -D playwright-core
 node skills/optimize-three/scripts/measure.mjs http://localhost:5173/ --gpu=both
 ```
 
+### Measurement semantics
+
+`measure.mjs` reports **render fps** separately from **raf Hz**. Render FPS is the change in
+`window.__perf.report().frames` divided by the actual measurement duration (after warmup).
+A sleeping scene therefore measures **0 render FPS**, even while the observer's rAF runs at 60 Hz.
+Demand rendering includes idle time; it reports throughput over the whole window, not burst smoothness.
+
+Without a cumulative render counter or the explicit hook below, render FPS is **not measured**
+(`–` in the table; `renderFps: null`, `renderFrames: null`, `renderSource: "unmeasured"` in JSON).
+The script cannot reliably infer application frames from WebGL drawcalls, postprocessing passes,
+offscreen renders, or rAF callbacks. It does not automatically wrap Three.js renderers.
+
+For an application without the kit, call this once after each complete application frame:
+
+```js
+renderer.render(scene, camera); // or the entire composer / awaited async render
+window.__measure?.recordRenderFrame();
+```
+
+Call the hook during warmup too, including the initial frame of a static/demand scene. Otherwise the
+script cannot distinguish an idle instrumented app from one that never installed the hook and
+marks that first measurement window unmeasured. Count one frame after all passes, not one per pass.
+
+Existing JSON fields (`rafFps`, `rafP50/P95/Max`, `perf`, GPU string, validity, errors, heap and long
+tasks) remain. New fields are `renderFps`, `renderFrames`, `renderSource`, `measurementMs`,
+`renderIntervalMs` (hook intervals; null when unavailable) and `perfError`.
+Nested `perf.fps`, kit interval/CPU/GPU samples and miss rates are the kit's existing rolling report;
+they may include warmup or pre-idle frames. Use top-level `renderFps` for measurement-window comparisons.
+Hook interval percentiles are null with fewer than two frames. A reset/replaced kit counter is
+unmeasured. Render counting measures completed application callbacks, not GPU completion or frames
+actually presented by the display. GPU timer readings retain their existing meaning.
+
+The observer itself keeps rAF active and adds measurement overhead. Use a foreground headed browser
+for display pacing, and keep camera/input sequences identical between comparisons.
+See [measurement limits](skills/optimize-three/references/measurement.md).
+
+Tests: `npm test` runs dependency-free clock/kit and CLI regressions. For the additional real-browser
+smoke test, install `playwright-core`, run `npx playwright-core install chromium`, then
+`MEASURE_BROWSER_TESTS=1 npm test` (set the environment variable equivalently on Windows).
+The smoke test verifies frame counting, not real-GPU performance.
+
 Minimal kit wiring:
 
 ```js
